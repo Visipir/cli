@@ -33,7 +33,7 @@ var (
 	styleFocus       = false
 	noRestart        = false
 	liveRefresh      = false
-	bypassAdminCheck = false
+	bypassAdminCheck = true
 )
 
 func init() {
