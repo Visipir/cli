@@ -16,9 +16,9 @@ import (
 // extracted apps' assets
 func Backup(spicetifyVersion string) {
 	if isAppX {
-		utils.PrintInfo(`You are using Spotify Windows Store version, which is only partly supported.
-Stop using Spicetify with Windows Store version unless you absolutely CANNOT install normal Spotify from installer.
-Modded Spotify cannot be launched using original Shortcut/Start menu tile. To correctly launch Spotify with modification, please make a desktop shortcut that execute "spicetify auto". After that, you can change its icon, pin to start menu or put in startup folder.`)
+		utils.PrintInfo(`You are using Spotify Windows Store version, which is only partly supported
+Stop using Spicetify with Windows Store version unless you absolutely CANNOT install normal Spotify from installer
+Modded Spotify cannot be launched using original Shortcut/Start menu tile. To correctly launch Spotify with modification, please make a desktop shortcut that execute "spicetify auto". After that, you can change its icon, pin to start menu or put in startup folder`)
 		if !ReadAnswer("Continue backing up anyway? [y/N]: ", false, true) {
 			os.Exit(1)
 		}
@@ -26,7 +26,7 @@ Modded Spotify cannot be launched using original Shortcut/Start menu tile. To co
 	backupVersion := backupSection.Key("version").MustString("")
 	backStat := backupstatus.Get(prefsPath, backupFolder, backupVersion)
 	if !backStat.IsEmpty() {
-		utils.PrintInfo("There is available backup.")
+		utils.PrintInfo("There is available backup")
 		utils.PrintInfo("Clear current backup:")
 
 		spotStat := spotifystatus.Get(appPath)
@@ -34,8 +34,8 @@ Modded Spotify cannot be launched using original Shortcut/Start menu tile. To co
 			clearBackup()
 
 		} else {
-			utils.PrintWarning(`After clearing backup, Spotify cannot be backed up again.`)
-			utils.PrintInfo(`Please restore first then backup, run "spicetify restore backup" or re-install Spotify then run "spicetify backup".`)
+			utils.PrintWarning(`After clearing backup, Spotify cannot be backed up again`)
+			utils.PrintInfo(`Please restore first then backup, run "spicetify restore backup" or re-install Spotify then run "spicetify backup"`)
 			os.Exit(1)
 		}
 	}
@@ -55,7 +55,7 @@ Modded Spotify cannot be launched using original Shortcut/Start menu tile. To co
 	if totalApp > 0 {
 		utils.PrintGreen("OK")
 	} else {
-		utils.PrintError("Cannot backup app files. Reinstall Spotify and try again.")
+		utils.PrintError("Cannot backup app files. Reinstall Spotify and try again")
 		os.Exit(1)
 	}
 
@@ -65,17 +65,23 @@ Modded Spotify cannot be launched using original Shortcut/Start menu tile. To co
 
 	utils.PrintBold("Preprocessing:")
 
-	preprocess.Start(
-		spicetifyVersion,
-		rawFolder,
-		preprocess.Flag{
-			DisableSentry:  preprocSection.Key("disable_sentry").MustBool(false),
-			DisableLogging: preprocSection.Key("disable_ui_logging").MustBool(false),
-			RemoveRTL:      preprocSection.Key("remove_rtl_rule").MustBool(false),
-			ExposeAPIs:     preprocSection.Key("expose_apis").MustBool(false),
-			SpotifyVer:     utils.GetSpotifyVersion(prefsPath)},
-	)
-	utils.PrintGreen("OK")
+	spotifyBasePath := spotifyPath
+	if spotifyBasePath == "" {
+		utils.PrintError("Spotify installation path not found. Cannot preprocess V8 snapshots")
+	} else {
+		preprocess.Start(
+			spicetifyVersion,
+			spotifyBasePath,
+			rawFolder,
+			preprocess.Flag{
+				DisableSentry:  preprocSection.Key("disable_sentry").MustBool(false),
+				DisableLogging: preprocSection.Key("disable_ui_logging").MustBool(false),
+				RemoveRTL:      preprocSection.Key("remove_rtl_rule").MustBool(false),
+				ExposeAPIs:     preprocSection.Key("expose_apis").MustBool(false),
+				SpotifyVer:     utils.GetSpotifyVersion(prefsPath)},
+		)
+	}
+	utils.PrintSuccess("Preprocessing completed")
 
 	err = utils.Copy(rawFolder, themedFolder, true, []string{".html", ".js", ".css"})
 	if err != nil {
@@ -83,7 +89,7 @@ Modded Spotify cannot be launched using original Shortcut/Start menu tile. To co
 	}
 
 	preprocess.StartCSS(themedFolder)
-	utils.PrintGreen("OK")
+	utils.PrintSuccess("CSS replacing completed")
 
 	backupSection.Key("version").SetValue(utils.GetSpotifyVersion(prefsPath))
 	backupSection.Key("with").SetValue(spicetifyVersion)
@@ -97,7 +103,7 @@ func Clear() {
 	spotStat := spotifystatus.Get(appPath)
 
 	if !spotStat.IsBackupable() {
-		utils.PrintWarning("Before clearing backup, please restore or re-install Spotify to stock state.")
+		utils.PrintWarning("Before clearing backup, please restore or re-install Spotify to stock state")
 		os.Exit(1)
 	}
 
@@ -138,5 +144,5 @@ func Restore() {
 		utils.Fatal(err)
 	}
 
-	utils.PrintSuccess("Spotify is restored.")
+	utils.PrintSuccess("Spotify is restored")
 }

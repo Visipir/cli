@@ -27,15 +27,19 @@ type Flag struct {
 
 // AdditionalOptions .
 func AdditionalOptions(appsFolderPath string, flags Flag) {
+	jsModifiers := []func(path string, flags Flag){
+		insertExpFeatures,
+		insertSidebarConfig,
+		insertHomeConfig,
+	}
 	filesToModified := map[string][]func(path string, flags Flag){
 		filepath.Join(appsFolderPath, "xpui", "index.html"): {
 			htmlMod,
 		},
-		filepath.Join(appsFolderPath, "xpui", "xpui.js"): {
+		filepath.Join(appsFolderPath, "xpui", "xpui.js"):         jsModifiers,
+		filepath.Join(appsFolderPath, "xpui", "xpui-modules.js"): jsModifiers,
+		filepath.Join(appsFolderPath, "xpui", "xpui-snapshot.js"): {
 			insertCustomApp,
-			insertExpFeatures,
-			insertSidebarConfig,
-			insertHomeConfig,
 		},
 		filepath.Join(appsFolderPath, "xpui", "home-v2.js"): {
 			insertHomeConfig,
@@ -57,6 +61,7 @@ func AdditionalOptions(appsFolderPath string, flags Flag) {
 		spotifyPatch, _ = strconv.Atoi(verParts[2])
 	}
 
+	filesToModified[filepath.Join(appsFolderPath, "xpui", "xpui.js")] = append(filesToModified[filepath.Join(appsFolderPath, "xpui", "xpui.js")], insertCustomApp)
 	if spotifyMajor >= 1 && spotifyMinor >= 2 && spotifyPatch >= 57 {
 		filesToModified[filepath.Join(appsFolderPath, "xpui", "xpui.js")] = append(filesToModified[filepath.Join(appsFolderPath, "xpui", "xpui.js")], insertExpFeatures)
 	} else {
@@ -187,6 +192,12 @@ func htmlMod(htmlPath string, flags Flag) {
 	}
 
 	utils.ModifyFile(htmlPath, func(content string) string {
+		utils.Replace(
+			&content,
+			`<script defer="defer" src="/xpui-snapshot\.js"></script>`,
+			func(submatches ...string) string {
+				return `<script defer="defer" src="/xpui-modules.js"></script><script defer="defer" src="/xpui-snapshot.js"></script>`
+			})
 		utils.Replace(
 			&content,
 			`<\!-- spicetify helpers -->`,
